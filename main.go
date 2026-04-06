@@ -61,7 +61,7 @@ func CodeVerifierToChallenge(codeVerifier string) string {
 
 func NewLoginURL(codeVerifier string) string {
 	data := url.Values{}
-	data.Set("scope", "https://wattsb2cap02.onmicrosoft.com/wattsapiresi/manage+offline_access+openid+profile")
+	data.Set("scope", "https://wattsb2cap02.onmicrosoft.com/wattsapiresi/manage offline_access openid profile")
 	data.Set("response_type", "code")
 	data.Set("client_id", clientID)
 	data.Set("redirect_uri", "msal"+clientID+"://auth")
@@ -160,7 +160,19 @@ func LoginSelfAsserted(codeVerifier, username, password string) (string, error) 
 		resp.Body.Close()
 		return "", err
 	}
+	// B2C SelfAsserted always returns HTTP 200, check JSON body for actual status
+	selfAssertedBody, _ := io.ReadAll(resp.Body)
 	resp.Body.Close()
+	log.Printf("SelfAsserted response: %s", string(selfAssertedBody))
+	var selfAssertedResult struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(selfAssertedBody, &selfAssertedResult); err == nil {
+		if selfAssertedResult.Status != "200" {
+			return "", fmt.Errorf("SelfAsserted login failed (status %s): %s", selfAssertedResult.Status, selfAssertedResult.Message)
+		}
+	}
 
 	// confirming token
 	confirmURL := fmt.Sprintf("https://login.watts.io/wattsb2cap02.onmicrosoft.com/B2C_1A_Residential_UnifiedSignUpOrSignIn/api/CombinedSigninAndSignup/confirmed?rememberMe=true&csrf_token=%v&tx=StateProperties=%v", csrf, transactionEncoded)
@@ -194,7 +206,7 @@ func LoginSelfAsserted(codeVerifier, username, password string) (string, error) 
 func ExchangeAuthToken(code, codeVerifier string) (ExchangedAuthTokenResponse, error) {
 	data := url.Values{}
 	data.Set("client_id", clientID)
-	data.Set("scope", "https://wattsb2cap02.onmicrosoft.com/wattsapiresi/manage+offline_access+openid+profile")
+	data.Set("scope", "https://wattsb2cap02.onmicrosoft.com/wattsapiresi/manage offline_access openid profile")
 	data.Set("client_info", "1")
 	data.Set("grant_type", "authorization_code")
 	data.Set("code", code)
@@ -586,7 +598,7 @@ func envOrDefault(key, fallback string) string {
 func RefreshAuthToken(refreshToken string) (ExchangedAuthTokenResponse, error) {
 	data := url.Values{}
 	data.Set("client_id", clientID)
-	data.Set("scope", "https://wattsb2cap02.onmicrosoft.com/wattsapiresi/manage+offline_access+openid+profile")
+	data.Set("scope", "https://wattsb2cap02.onmicrosoft.com/wattsapiresi/manage offline_access openid profile")
 	data.Set("client_info", "1")
 	data.Set("grant_type", "refresh_token")
 	data.Set("refresh_token", refreshToken)

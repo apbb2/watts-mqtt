@@ -1,0 +1,14 @@
+services:
+  creamy-waha:
+    build: .
+    container_name: creamy-waha
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - WAHA_MQTT_BROKER=tcp://your-ha-ip:1883
+      - WAHA_MQTT_USER=your-mqtt-username
+      - WAHA_MQTT_PASS=your-mqtt-password
+      - WAHA_TOKENS_PATH=/data/tokens.json
+    volumes:
+      - ./data:/data
