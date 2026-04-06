@@ -1,7 +1,7 @@
 services:
-  creamy-waha:
+  watts-mqtt:
     build: .
-    container_name: creamy-waha
+    container_name: watts-mqtt
     restart: unless-stopped
     env_file:
       - .env
