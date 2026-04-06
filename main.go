@@ -864,9 +864,11 @@ func publishState(client mqtt.Client, device MyDevice) {
 		pub("availability", "offline")
 	}
 
-	// Current temperature
+	// Current temperature — prefer Room sensor, fall back to Floor sensor
 	if device.Data.Sensors.Room.Status == SensorStatusOkay {
 		pub("current_temp", fmt.Sprintf("%.1f", device.Data.Sensors.Room.Value))
+	} else if device.Data.Sensors.Floor.Status == SensorStatusOkay {
+		pub("current_temp", fmt.Sprintf("%.1f", device.Data.Sensors.Floor.Value))
 	}
 
 	// Current humidity
